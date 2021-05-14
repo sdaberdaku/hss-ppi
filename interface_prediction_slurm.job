@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#SBATCH --job-name interface_pred_CGN
+#SBATCH --output output_%j.txt
+#SBATCH --error errors_%j.txt
+#SBATCH --ntasks 1
+#SBATCH --partition allgroups
+#SBATCH --time 12:00:00
+#SBATCH --mem 500G
+
+cd /nfsd/dsl/carlo/michela/gcn_interface_pred_src
+#your working directory
+
+export OMP_NUM_THREADS=32
+srun /nfsd/opt/singularity/bin/singularity exec singularity-python.img python3 train.py
