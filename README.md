@@ -16,6 +16,7 @@ The repository was first published at https://gitlab.com/sebastiandaberdaku/hss-
 - `utils/`: data loading, the GCN model and layers, metrics and the command-line options (`config.py`).
 - `preprocessing/`: scripts that computed the features in `data/` from the PDB structures.
 - `entropy_analysis.py`: von Neumann graph entropy of the protein graphs.
+- `exploration/`: the first experiments from early 2020 (AAindex feature selection, residue graphs on Docking Benchmark 5).
 - `data/`: residue feature tables (`AAIndexFeatures.csv`, `aaindex1`, `one_hot_encoding.csv`, `selected_features_*.txt`).
 
 ## Data
