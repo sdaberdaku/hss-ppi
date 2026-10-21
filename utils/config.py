@@ -1,19 +1,19 @@
 import argparse
 
 args = argparse.ArgumentParser()
-args.add_argument('--learning_rate', default=0.001)
+args.add_argument('--learning_rate', type=float, default=0.001)
 
 
-args.add_argument('--hidden', default=[35,32])
+args.add_argument('--hidden', type=int, nargs='+', default=[35, 32])
 
 #args.add_argument('--hidden', default=[35, 30,20])
 #args.add_argument('--hidden', default=[35, 32])
-args.add_argument('--epochs', type=int, default=4)
+args.add_argument('--epochs', type=int, default=500)
 
 #args.add_argument('--hidden', default=[38, 38, 38, 38, 18, 18, 18, 18, 9, 9, 6, 6])
 
-args.add_argument('--dropout', default=0.5)
-args.add_argument('--weight_decay', default=5e-4) # 5e-4
+args.add_argument('--dropout', type=float, default=0.5)
+args.add_argument('--weight_decay', type=float, default=5e-4)
 # args.add_argument('--early_stopping', default=10)
 # args.add_argument('--max_degree', default=3)
 
