@@ -1,148 +1,125 @@
 # HSS-PPI
-***************************************************************************************************
-## HSS-PPI tool for "A Hierarchical Representation for PPIs Sites Prediction" - version 0.1
-***************************************************************************************************
 
-***************************************************************************************************
-## REQUIREMENTS
-***************************************************************************************************
-Python 3 
-singularity version >= 3.4.2 (see https://sylabs.io/guides/3.4/user-guide/installation.html for information)
+Code and data for the paper:
 
+> Quadrini M, Daberdaku S, Ferrari C. **Hierarchical representation for PPI sites prediction.** *BMC Bioinformatics* 23, 96 (2022). https://doi.org/10.1186/s12859-022-04624-y
 
-***************************************************************************************************
-## INSTALLATION
-***************************************************************************************************
+HSS-PPI trains a graph convolutional network that predicts which residues of a protein are part of a protein–protein interaction interface. Each protein is a graph whose nodes are residues, built from one of three representations: the amino acid sequence, the contact map, or the hierarchical representation described in the paper.
 
-Download the zip file of last version of HSS-PPI from folder "download" at
+The repository was first published at https://gitlab.com/sebastiandaberdaku/hss-ppi, the address given in the paper. This copy has the same code and data, a pinned Python environment, and the original Singularity image as a [release asset](https://github.com/sdaberdaku/hss-ppi/releases) instead of a file in the repository.
 
-https://gitlab.com/sebastiandaberdaku/hss-ppi.git
+## Contents
 
-and put it in any position of your drive. 
+- `train.py`: loads a protein class, trains the model and evaluates it on the test set.
+- `utils/`: data loading, the GCN model and layers, metrics and the command-line options (`config.py`).
+- `preprocessing/`: scripts that computed the features in `data/` from the PDB structures.
+- `entropy_analysis.py`: von Neumann graph entropy of the protein graphs.
+- `data/`: the structures and features used in the paper.
+  - `benchmark5/`: the Docking Benchmark 5 structures (see `data/benchmark5/README`).
+  - `train/`, `validation/`, `test/`: one folder per protein class (`A`, `AB`, `EI`, `ER`, `ES`, `OG`, `OR`, `OX`), each with the PDB files and the computed features: interface residues, distance and sequence matrices, ASA, relative ASA, phi/psi angles and residue contacts.
+  - `AAIndexFeatures.csv`, `aaindex1`, `one_hot_encoding.csv`: residue features.
 
+The `data/` folder is about 1 GB.
 
+## Environment
 
-***************************************************************************************************
-## RUNNING THE SIMULATION 
-****************************************************************************************************
+The code needs Python 3.6 and TensorFlow 2.0. There are three ways to get the environment.
 
+1. A virtual environment with the pinned packages:
 
-To run the simulation for the bound receptors of protein class X (X can be any of the following protein classes: A, AB, EI, ER, ES, OG, OR, OX) use the following command: 
-```bash
-singularity exec singularity-python.sif python3 train.py --protein_class $X --is_bound --is_receptor
-```
+   ```bash
+   python3.6 -m venv .venv
+   . .venv/bin/activate
+   pip install -r requirements.txt
+   ```
 
-To run the simulation for the bound ligands of protein class X, use the following command: 
-```bash
-singularity exec singularity-python.sif python3 train.py --protein_class $X --is_bound
-```
+2. An Apptainer (or Singularity) image built from the definition file:
 
+   ```bash
+   apptainer build hss-ppi.sif hss-ppi.def
+   ```
 
-To run the simulation for the unbound receptors of protein class X, use the following command: 
-```bash
-singularity exec singularity-python.sif python3 train.py --protein_class $X --is_receptor
-```
+3. The image used for the paper (Ubuntu 18.04, Python 3.6, TensorFlow 2.0.0), `hss-ppi.sif`, from the [releases page](https://github.com/sdaberdaku/hss-ppi/releases).
 
-To run the simulation for the unbound ligands of protein class X, use the following command: 
-```bash
-singularity exec singularity-python.sif python3 train.py --protein_class $X
-```
+With an image, prefix the commands below with `apptainer exec hss-ppi.sif` (or `singularity exec hss-ppi.sif`).
 
+## Training
 
-The user can specify a set of parameters: the learning rate, dropout, hidden, weight_decay, epochs, distance threshold and representation type. Their default values are 0.001, 0.5, [35,32], 5e-4, 500,12 and hierarchical, respectively. For any modification, please check out *utils/config.py*. Once the dataset of a given protein class is loaded, it is saved as a pickle in the data folder. Users can use the *--load_pickle* flag to speed up subsequent computation times once the pickle file has been created.
+Run from the repository root. The class is chosen with `--protein_class`, the structure set with two flags:
 
+| Structures | Command |
+| --- | --- |
+| Bound receptors | `python3 train.py --protein_class A --is_bound --is_receptor` |
+| Bound ligands | `python3 train.py --protein_class A --is_bound` |
+| Unbound receptors | `python3 train.py --protein_class A --is_receptor` |
+| Unbound ligands | `python3 train.py --protein_class A` |
 
-***************************************************************************************************
-## EXAMPLES 
-***************************************************************************************************
-You use the following command:  
+Options:
 
-```bash
-singularity exec singularity-python.sif python3 train.py --protein_class A --is_bound --is_receptor --epochs 1390 --distance_threshold 6 --representation_type contact_map
-```
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `--representation_type` | `hierarchical` | `sequence`, `contact_map` or `hierarchical` |
+| `--distance_threshold` | `12` | Cα–Cα distance (Å) under which two residues are connected |
+| `--epochs` | `500` | Training epochs |
+| `--learning_rate` | `0.001` | Learning rate |
+| `--dropout` | `0.5` | Dropout rate |
+| `--weight_decay` | `5e-4` | Weight decay |
+| `--hidden` | `35 32` | Units per hidden layer |
+| `--load_pickle` | off | Reuse the dataset saved by a previous run |
 
-to run the simulation for the bound receptors of protein class A training the model with 1390 epochs and abstracting the proteins as contact map representation and setting the distance threshold (distance between C_alpha - C_alpha carbons) to 6 \AA. The omitted parameters (learning rate, dropout, hidden, weight_decay) take the default values.  
+The first run for a class and structure set saves the loaded dataset to `data/<class>_<l|r>_<u|b>.pkl.gz`; `--load_pickle` reads it back, which is much faster.
 
+Results go to a folder named after the settings, for example `results(epochs=500,representation_type=hierarchical,distance_threshold=12)/`. It contains the metrics (`<class>_<l|r>_<u|b>_interface_prediction.txt`), ROC and precision-recall plots, and the per-protein predictions in `predictions/test/<class>/`.
 
-You use the following command:  
-
-```bash
-singularity exec singularity-python.sif python3 train.py --protein_class AB --is_bound --epochs 805 --distance_threshold 8 --representation_type contact_map
-```
-
-to run the simulation for the bound ligands of protein class OG training the model with 905 epochs and abstracting the proteins as contact map representation and setting the distance threshold (distance between C_alpha - C_alpha carbons) to 10 \AA. The omitted parameters (learning rate, dropout, hidden, weight_decay) take the default values.  
-
-You use the following command:  
-
-```bash
-singularity exec singularity-python.sif python3 train.py --protein_class EI --is_receptor --representation_type hierarchical --distance_threshold 8 --epochs 835
-```
-
-To run the simulation for the unbound receptors of protein class EI training the model with 835 epochs and abstracting the proteins as hierarchical representation and setting the distance threshold (distance between C_alpha - C_alpha carbons) to 8 \AA. The omitted parameters (learning rate, dropout, hidden, weight_decay) take the default values.  
-
-
-You use the following command:  
+Examples:
 
 ```bash
-singularity exec singularity-python.sif python3 train.py --protein_class AB --epochs 580 --distance_threshold 10 --representation_type hierarchical
-```
-to run the unbound ligands of protein class AB training the model with 580 epochs and abstracting the proteins as hierarchical representation and setting the distance threshold (distance between C_alpha - C_alpha carbons) to 10 \AA. The omitted parameters (learning rate, dropout, hidden, weight_decay) take the default values.  
- 
+# bound receptors of class A, contact map, 6 Å, 1390 epochs
+python3 train.py --protein_class A --is_bound --is_receptor --epochs 1390 --distance_threshold 6 --representation_type contact_map
 
- 
-***************************************************************************
-## DATA FORMAT and PREPROCESSING 
-**************************************************************************
-To prepare the training, validation and testing datasets for the interface prediction task, it was necessary to determine the distance matrix and  the sequence matrix for each protein, the amino acids of each proteins that interaction interface with the other molecule,  and the ASA, the angle Phi and Psi, the relative ASA  and the number of each contacts. All the preprocessing scripts are available in the *preprocessing* folder.
+# bound ligands of class AB, contact map, 8 Å, 805 epochs
+python3 train.py --protein_class AB --is_bound --epochs 805 --distance_threshold 8 --representation_type contact_map
 
-The following preprocessing steps were used
+# unbound receptors of class EI, hierarchical, 8 Å, 835 epochs
+python3 train.py --protein_class EI --is_receptor --representation_type hierarchical --distance_threshold 8 --epochs 835
 
-### determine_interface.py
-
-To compute the interaction interface for each monomer, the *determine_interface.py* script can be used. The script can be executed with the following command from the root of the project:
-```bash
-singularity exec singularity-python.sif python3 preprocessing/determine_interface.py
+# unbound ligands of class AB, hierarchical, 10 Å, 580 epochs
+python3 train.py --protein_class AB --epochs 580 --distance_threshold 10 --representation_type hierarchical
 ```
 
-### aa_distance_matrix.py 
-To compute the amino acid distance matrix for each monomer, the *aa_distance_matrix.py* script can be used. The script can be executed with the following command from the root of the project: 
-```bash
-singularity exec singularity-python.sif python3 preprocessing/aa_distance_matrix.py
-```
-The computation of all distance matrices is a bit slow because the script evaluate all atom pairs from each residue pair in all PDF files, but it needs to be computed only once. The script will also try to use all the available cores on the host machine to speed up the computation in parallel.
+`interface_prediction_slurm.job` runs `train.py` with the image on a SLURM cluster. Submit it from the repository root and pass the options after the script name, for example `sbatch interface_prediction_slurm.job --protein_class A --is_bound`.
 
-### aa_sequence_matrix.py
-To compute the amino acid sequence matrix for each monomer, the *aa_sequence_matrix.py* script can be used. The script can be executed with the following command from the root of the project: 
-```bash
-singularity exec singularity-python.sif python3 preprocessing/aa_sequence_matrix.py
-```
+## Preprocessing
 
-### ASA.py
-To compute the ASA for each amino acid, the *ASA.py* script can be used. The script can be executed with the following command from the root of the project: 
-```bash
-singularity exec singularity-python.sif python3 preprocessing/ASA.py
-```
+The features in `data/` are already computed. To recompute them from the PDB files in `data/<partition>/<class>/pdb/`, run these scripts from the repository root:
 
-### PHI-PSI.py
-To compute the PHI-PSI angles for each amino acid, the *PHI-PSI.py* script can be used. The script can be executed with the following command from the root of the project: 
-```bash
-singularity exec singularity-python.sif python3 preprocessing/PHI-PSI.py
-```
-### relative_ASA.py
-To compute the relative ASA for each amino acid, the *relative_ASA.py* script can be used. The script can be executed with the following command from the root of the project: 
-```bash
-singularity exec singularity-python.sif python3 preprocessing/relative_ASA.py
-```
+| Script | Output folder |
+| --- | --- |
+| `preprocessing/determine_interface.py` | `interaction_interface/` |
+| `preprocessing/aa_distance_matrix.py` | `distance_matrices/` (slow; uses all cores) |
+| `preprocessing/aa_sequence_matrix.py` | `sequence_matrices/` |
+| `preprocessing/ASA.py` | `ASA/` |
+| `preprocessing/relative_ASA.py` | `relative_ASA/` |
+| `preprocessing/PHI-PSI.py` | `PHI/`, `PSI/` |
+| `preprocessing/residue_contacts.py` | `residue_contacts_<threshold>/` |
 
-### residue_contacts.py
-To compute the residue contacts for each monomer, the *residue_contacts.py* script can be used. The script can be executed with the following command from the root of the project: 
-```bash
-singularity exec singularity-python.sif python3 preprocessing/residue_contacts.py
+For example: `python3 preprocessing/ASA.py`.
+
+## Citation
+
+```bibtex
+@article{quadrini2022hierarchical,
+  title   = {Hierarchical representation for PPI sites prediction},
+  author  = {Quadrini, Michela and Daberdaku, Sebastian and Ferrari, Carlo},
+  journal = {BMC Bioinformatics},
+  volume  = {23},
+  number  = {1},
+  pages   = {96},
+  year    = {2022},
+  doi     = {10.1186/s12859-022-04624-y}
+}
 ```
 
-***************************************************************************
-CONTACT INFORMATION
-***************************************************************************
+## License
 
-Please report any issue to michela.quadrini@unicam.it or to Michela Quadrini, Polo
-Informatico, via Madonna delle Carceri 9, 62032 Camerino (MC) Italy.
+MIT, see [LICENSE](LICENSE).
