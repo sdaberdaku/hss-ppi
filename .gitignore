@@ -7,3 +7,7 @@ data/*.pkl.gz
 results(*/
 output_*.txt
 errors_*.txt
+data/benchmark5/
+data/train/
+data/validation/
+data/test/

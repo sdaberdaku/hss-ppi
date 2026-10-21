@@ -6,7 +6,7 @@ Code and data for the paper:
 
 HSS-PPI trains a graph convolutional network that predicts which residues of a protein are part of a protein–protein interaction interface. Each protein is a graph whose nodes are residues, built from one of three representations: the amino acid sequence, the contact map, or the hierarchical representation described in the paper.
 
-The repository was first published at https://gitlab.com/sebastiandaberdaku/hss-ppi, the address given in the paper. This copy has the same code and data, a pinned Python environment, and the original Singularity image as a [release asset](https://github.com/sdaberdaku/hss-ppi/releases) instead of a file in the repository.
+The repository was first published at https://gitlab.com/sebastiandaberdaku/hss-ppi, the address given in the paper. This copy has the same code and data, with a pinned Python environment. The dataset and the original Singularity image are [release assets](https://github.com/sdaberdaku/hss-ppi/releases/tag/v1.0.0) instead of files in the repository.
 
 ## Contents
 
@@ -14,12 +14,22 @@ The repository was first published at https://gitlab.com/sebastiandaberdaku/hss-
 - `utils/`: data loading, the GCN model and layers, metrics and the command-line options (`config.py`).
 - `preprocessing/`: scripts that computed the features in `data/` from the PDB structures.
 - `entropy_analysis.py`: von Neumann graph entropy of the protein graphs.
-- `data/`: the structures and features used in the paper.
-  - `benchmark5/`: the Docking Benchmark 5 structures (see `data/benchmark5/README`).
-  - `train/`, `validation/`, `test/`: one folder per protein class (`A`, `AB`, `EI`, `ER`, `ES`, `OG`, `OR`, `OX`), each with the PDB files and the computed features: interface residues, distance and sequence matrices, ASA, relative ASA, phi/psi angles and residue contacts.
-  - `AAIndexFeatures.csv`, `aaindex1`, `one_hot_encoding.csv`: residue features.
+- `data/`: residue feature tables (`AAIndexFeatures.csv`, `aaindex1`, `one_hot_encoding.csv`, `selected_features_*.txt`).
 
-The `data/` folder is about 1 GB.
+## Data
+
+The structures and features used in the paper are in the release asset `hss-ppi-data.tar.gz` (874 MB, about 1.1 GB extracted). Download and extract it from the repository root:
+
+```bash
+curl -L https://github.com/sdaberdaku/hss-ppi/releases/download/v1.0.0/hss-ppi-data.tar.gz | tar -xz
+```
+
+It adds to `data/`:
+
+- `benchmark5/`: the Docking Benchmark 5 structures (see `data/benchmark5/README`).
+- `train/`, `validation/`, `test/`: one folder per protein class (`A`, `AB`, `EI`, `ER`, `ES`, `OG`, `OR`, `OX`), each with the PDB files and the computed features: interface residues, distance and sequence matrices, ASA, relative ASA, phi/psi angles and residue contacts.
+
+The SHA-256 checksums of the assets are in `SHA256SUMS` on the release page.
 
 ## Environment
 
