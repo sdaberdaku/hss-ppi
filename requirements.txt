@@ -1,0 +1,10 @@
+# Versions from the container image used for the paper (Ubuntu 18.04, Python 3.6)
+tensorflow==2.0.0
+protobuf==3.11.3
+numpy==1.18.3
+scipy==1.4.1
+pandas==1.0.3
+scikit-learn==0.22.2.post1
+biopython==1.76
+networkx==2.4
+matplotlib==3.2.1

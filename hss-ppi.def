@@ -1,0 +1,11 @@
+Bootstrap: docker
+From: python:3.6-slim
+
+%files
+    requirements.txt /opt/hss-ppi/requirements.txt
+
+%post
+    pip install --no-cache-dir -r /opt/hss-ppi/requirements.txt
+
+%runscript
+    exec python3 "$@"
