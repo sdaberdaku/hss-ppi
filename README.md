@@ -1,5 +1,7 @@
 # HSS-PPI
 
+<p align="center"><img src="docs/hss-ppi.png" alt="Molecular surface of a protein complex" width="360"></p>
+
 Code and data for the paper:
 
 > Quadrini M, Daberdaku S, Ferrari C. **Hierarchical representation for PPI sites prediction.** *BMC Bioinformatics* 23, 96 (2022). https://doi.org/10.1186/s12859-022-04624-y
